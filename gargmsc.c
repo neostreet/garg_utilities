@@ -5,7 +5,21 @@
 #include "garg.mac"
 #include "bitfuns.h"
 
-int format_square(int square)
+static unsigned char initial_board[] = {
+  (unsigned char)0x72, (unsigned char)0x34, (unsigned char)0x56, (unsigned char)0x43, (unsigned char)0x27,
+  (unsigned char)0x11, (unsigned char)0x11, (unsigned char)0x11, (unsigned char)0x11, (unsigned char)0x11,
+  (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00,
+  (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00,
+  (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00,
+  (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00,
+  (unsigned char)0xff, (unsigned char)0xff, (unsigned char)0xff, (unsigned char)0xff, (unsigned char)0xff,
+  (unsigned char)0x9e, (unsigned char)0xdc, (unsigned char)0xba, (unsigned char)0xcd, (unsigned char)0xe9,
+};
+
+extern char piece_ids[]; /* "RNBQKG" */
+extern char fmt_str[];
+
+static int format_square(int square)
 {
   int bBlack;
   int return_char;
@@ -139,7 +153,7 @@ void fprint_moves(struct game *gamept,char *filename)
 
   for (n = 0; n < gamept->num_moves; n++) {
     fprintf(fptr,"%d %d %s\n",gamept->moves[n].from,gamept->moves[n].to,
-      (gamept->moves[n].special_move_info ? special_moves[gamept->moves[n].special_move_info] : ""));
+      (gamept->moves[n].special_move_info ? special_move_strings[gamept->moves[n].special_move_info] : ""));
   }
 
   fclose(fptr);
@@ -151,249 +165,16 @@ void fprint_moves2(struct game *gamept,FILE *fptr)
 
   for (n = 0; n < gamept->num_moves; n++) {
     fprintf(fptr,"%d %d %s\n",gamept->moves[n].from,gamept->moves[n].to,
-      (gamept->moves[n].special_move_info ? special_moves[gamept->moves[n].special_move_info] : ""));
+      (gamept->moves[n].special_move_info ? special_move_strings[gamept->moves[n].special_move_info] : ""));
   }
 }
 
-void print_special_moves(struct game *gamept)
+void set_initial_board(struct game *gamept)
 {
   int n;
-  int and_val;
-  int hit;
 
-  and_val = 0x1;
-  hit = 0;
-
-  for (n = 0; n < num_special_moves; n++) {
-    if (gamept->moves[gamept->curr_move].special_move_info & and_val) {
-      if (hit)
-        putchar(' ' );
-
-      printf("%s",special_moves[n]);
-
-      hit++;
-    }
-
-    and_val <<= 1;
-  }
-
-  if (hit)
-    putchar(0x0a);
-  else
-    printf("SPECIAL_MOVE_NONE\n");
-}
-
-int match_board(unsigned char *board1,unsigned char *board2,bool bExactMatch)
-{
-  int m;
-  int n;
-  int square1;
-  int square2;
-
-  for (m = 0; m < 8; m++) {
-    for (n = 0; n < 8; n++) {
-      square1 = get_piece2(board1,7 - m,n);
-      square2 = get_piece2(board2,7 - m,n);
-
-      if (!bExactMatch) {
-        if (square2) {
-          if (square2 == EMPTY_ID) {
-            if (square1)
-              break;
-          }
-          else if (square1 != square2)
-            break;
-        }
-      }
-      else {
-        if (square2 == EMPTY_ID) {
-          if (square1)
-            break;
-        }
-        else if (square1 != square2)
-          break;
-      }
-    }
-
-    if (n < 8)
-      break;
-  }
-
-  if (m < 8)
-    return 0;
-
-  return 1;
-}
-
-bool multiple_queens(unsigned char *board)
-{
-  int n;
-  int piece;
-  int num_white_queens = 0;
-  int num_black_queens = 0;
-
-  for (n = 0; n < NUM_BOARD_SQUARES; n++) {
-    piece = get_piece1(board,n);
-
-    if (piece == QUEEN_ID)
-      num_white_queens++;
-    else if (piece == QUEEN_ID * -1)
-      num_black_queens++;
-  }
-
-  if ((num_white_queens > 1) || (num_black_queens > 1))
-    return true;
-
-  return false;
-}
-
-bool opposite_colored_bishops(unsigned char *board)
-{
-  int n;
-  int piece;
-  int rank;
-  int file;
-  int num_white_bishops = 0;
-  bool bWhiteBishopOnWhiteSquare;
-  int num_black_bishops = 0;
-  bool bBlackBishopOnWhiteSquare;
-
-  for (n = 0; n < NUM_BOARD_SQUARES; n++) {
-    piece = get_piece1(board,n);
-    rank = RANK_OF(n);
-    file = FILE_OF(n);
-
-    if (piece == BISHOP_ID) {
-      num_white_bishops++;
-      bWhiteBishopOnWhiteSquare = (rank % 2) ? (file % 2) : !(file % 2);
-    }
-    else if (piece == BISHOP_ID * -1) {
-      num_black_bishops++;
-      bBlackBishopOnWhiteSquare = (rank % 2) ? (file % 2) : !(file % 2);
-    }
-  }
-
-  if ((num_white_bishops == 1) && (num_black_bishops == 1) && (bWhiteBishopOnWhiteSquare != bBlackBishopOnWhiteSquare))
-    return true;
-
-  return false;
-}
-
-bool same_colored_bishops(unsigned char *board)
-{
-  int n;
-  int piece;
-  int rank;
-  int file;
-  int num_white_bishops = 0;
-  bool bWhiteBishopOnWhiteSquare;
-  int num_black_bishops = 0;
-  bool bBlackBishopOnWhiteSquare;
-
-  for (n = 0; n < NUM_BOARD_SQUARES; n++) {
-    piece = get_piece1(board,n);
-    rank = RANK_OF(n);
-    file = FILE_OF(n);
-
-    if (piece == BISHOP_ID) {
-      num_white_bishops++;
-      bWhiteBishopOnWhiteSquare = (rank % 2) ? (file % 2) : !(file % 2);
-    }
-    else if (piece == BISHOP_ID * -1) {
-      num_black_bishops++;
-      bBlackBishopOnWhiteSquare = (rank % 2) ? (file % 2) : !(file % 2);
-    }
-  }
-
-  if ((num_white_bishops == 1) && (num_black_bishops == 1) && (bWhiteBishopOnWhiteSquare == bBlackBishopOnWhiteSquare))
-    return true;
-
-  return false;
-}
-
-bool two_bishops(unsigned char *board)
-{
-  int n;
-  int piece;
-  int num_white_bishops = 0;
-  int num_black_bishops = 0;
-
-  for (n = 0; n < NUM_BOARD_SQUARES; n++) {
-    piece = get_piece1(board,n);
-
-    if (piece == BISHOP_ID)
-      num_white_bishops++;
-    else if (piece == BISHOP_ID * -1)
-      num_black_bishops++;
-  }
-
-  if (((num_white_bishops < 2) && (num_black_bishops == 2)) || ((num_white_bishops == 2) && (num_black_bishops < 2)))
-    return true;
-
-  return false;
-}
-
-bool opposite_side_castling(struct game *gamept)
-{
-  int n;
-  bool bHaveKingsideCastle;
-  bool bHaveQueensideCastle;
-
-  bHaveKingsideCastle = false;
-  bHaveQueensideCastle = false;
-
-  for (n = 0; n < gamept->num_moves; n++) {
-    if (gamept->moves[n].special_move_info & SPECIAL_MOVE_KINGSIDE_CASTLE) {
-      bHaveKingsideCastle = true;
-
-      if (bHaveQueensideCastle)
-        return true;
-    }
-    else if (gamept->moves[n].special_move_info & SPECIAL_MOVE_QUEENSIDE_CASTLE) {
-      bHaveQueensideCastle = true;
-
-      if (bHaveKingsideCastle)
-        return true;
-    }
-  }
-
-  return false;;
-}
-
-bool same_side_castling(struct game *gamept)
-{
-  int n;
-  int kingside_castles;
-  int queenside_castles;
-
-  kingside_castles = 0;
-  queenside_castles = 0;
-
-  for (n = 0; n < gamept->num_moves; n++) {
-    if (gamept->moves[n].special_move_info & SPECIAL_MOVE_KINGSIDE_CASTLE)
-      kingside_castles++;
-    else if (gamept->moves[n].special_move_info & SPECIAL_MOVE_QUEENSIDE_CASTLE)
-      queenside_castles++;
-  }
-
-  return ((kingside_castles == 2) || (queenside_castles == 2));
-}
-
-bool less_than_2_castles(struct game *gamept)
-{
-  int n;
-  int castles;
-
-  castles = 0;
-
-  for (n = 0; n < gamept->num_moves; n++) {
-    if (gamept->moves[n].special_move_info & SPECIAL_MOVE_KINGSIDE_CASTLE)
-      castles++;
-    else if (gamept->moves[n].special_move_info & SPECIAL_MOVE_QUEENSIDE_CASTLE)
-      castles++;
-  }
-
-  return (castles < 2);
+  for (n = 0; n < CHARS_IN_BOARD; n++)
+    gamept->board[n] = initial_board[n];
 }
 
 void position_game(struct game *gamept,int move)
