@@ -15,16 +15,7 @@
 #include "garg.glb"
 #include "garg.mac"
 
-static unsigned char initial_board[] = {
-  (unsigned char)0x72, (unsigned char)0x34, (unsigned char)0x56, (unsigned char)0x43, (unsigned char)0x27,
-  (unsigned char)0x11, (unsigned char)0x11, (unsigned char)0x11, (unsigned char)0x11, (unsigned char)0x11,
-  (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00,
-  (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00,
-  (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00,
-  (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00, (unsigned char)0x00,
-  (unsigned char)0xff, (unsigned char)0xff, (unsigned char)0xff, (unsigned char)0xff, (unsigned char)0xff,
-  (unsigned char)0x9e, (unsigned char)0xdc, (unsigned char)0xba, (unsigned char)0xcd, (unsigned char)0xe9,
-};
+extern char piece_ids[]; /* "RNBQKG" */
 
 static char *bad_piece_move[] = {
   "bad rook move",
@@ -34,6 +25,9 @@ static char *bad_piece_move[] = {
   "bad king move",
   "bad gargantua move"
 };
+
+extern int bHaveGame;
+extern int afl_dbg;
 
 int line_number(char *word,int wordlen)
 {
@@ -62,19 +56,14 @@ int get_piece_type_ix(int chara)
   return 0; /* should never happen */
 }
 
-void set_initial_board(struct game *gamept)
-{
-  int n;
-
-  for (n = 0; n < CHARS_IN_BOARD; n++)
-    gamept->board[n] = initial_board[n];
-}
-
 int read_binary_game(char *filename,struct game *gamept)
 {
   int fhndl;
   unsigned int bytes_to_read;
   unsigned int bytes_read;
+
+  if (bHaveGame)
+    afl_dbg = 1;
 
   if (debug_level == 2) {
     if (debug_fptr != NULL)
@@ -336,76 +325,6 @@ int populate_board_from_board_file(unsigned char *board,char *filename)
   return 0;
 }
 
-int populate_initial_board_from_board_file(char *filename)
-{
-  return populate_board_from_board_file(initial_board,filename);
-}
-
-int populate_board_from_bin_board_file(unsigned char *board,char *filename)
-{
-  struct stat stat_buf;
-  int fhndl;
-  unsigned int bytes_to_read;
-  unsigned int bytes_read;
-
-  if (stat(filename,&stat_buf) == -1)
-    return 1;
-
-  if (stat_buf.st_size != CHARS_IN_BOARD)
-    return 2;
-
-  if ((fhndl = open(filename,O_RDONLY | O_BINARY)) == -1)
-    return 3;
-
-  bytes_to_read = CHARS_IN_BOARD;
-
-  bytes_read = read(fhndl,(char *)board,bytes_to_read);
-
-  if (bytes_read != bytes_to_read) {
-    close(fhndl);
-    return 4;
-  }
-
-  close(fhndl);
-
-  return 0;
-}
-
-int populate_piece_counts_from_piece_count_file(int *piece_counts,char *filename)
-{
-  struct stat stat_buf;
-  int fhndl;
-  unsigned int bytes_to_read;
-  unsigned int bytes_read;
-
-  if (stat(filename,&stat_buf) == -1)
-    return 1;
-
-  if (stat_buf.st_size != (NUM_PIECE_TYPES_0 * 2) * sizeof (int))
-    return 2;
-
-  if ((fhndl = open(filename,O_RDONLY | O_BINARY)) == -1)
-    return 3;
-
-  bytes_to_read = (NUM_PIECE_TYPES_0 * 2) * sizeof (int);
-
-  bytes_read = read(fhndl,(char *)piece_counts,bytes_to_read);
-
-  if (bytes_read != bytes_to_read) {
-    close(fhndl);
-    return 4;
-  }
-
-  close(fhndl);
-
-  return 0;
-}
-
-int populate_initial_board_from_bin_board_file(char *filename)
-{
-  return populate_board_from_bin_board_file(initial_board,filename);
-}
-
 int write_board_to_binfile(unsigned char *board,char *filename)
 {
   int fhndl;
@@ -428,107 +347,4 @@ int write_board_to_binfile(unsigned char *board,char *filename)
   close(fhndl);
 
   return 0;
-}
-
-int count_num_pieces(int color,struct game *gamept)
-{
-  int n;
-  short piece;
-  int count;
-
-  count = 0;
-
-  for (n = 0; n < NUM_BOARD_SQUARES; n++) {
-    piece = get_piece1(gamept->board,n);
-
-    if (!piece)
-      continue;
-
-    if (color == WHITE) {
-      if (piece > 0)
-        count++;
-    }
-    else {
-      if (piece < 0)
-        count++;
-    }
-  }
-
-  return count;
-}
-
-void get_piece_counts(unsigned char *board,int *piece_counts)
-{
-  int n;
-  short piece;
-
-  for (n = 0; n < NUM_PIECE_TYPES_0 * 2; n++) {
-    piece_counts[n] = 0;
-  }
-
-  for (n = 0; n < NUM_BOARD_SQUARES; n++) {
-    piece = get_piece1(board,n);
-
-    if (!piece)
-      continue;
-
-    if (piece > 0) {
-      piece_counts[piece - 1]++;
-    }
-    else {
-      piece *= -1;
-      piece_counts[NUM_PIECE_TYPES_0 + piece - 1]++;
-    }
-  }
-}
-
-int piece_counts_match(int *piece_counts,int *match_piece_counts,bool bExactMatch)
-{
-  int n;
-
-  for (n = 0; n < NUM_PIECE_TYPES_0 * 2; n++) {
-    if (match_piece_counts[n] == -1) {
-      if (piece_counts[n])
-        return 0;
-      else
-        continue;
-    }
-
-    if (bExactMatch) {
-      if (piece_counts[n] != match_piece_counts[n])
-        return 0;
-    }
-    else {
-      if (match_piece_counts[n] && (piece_counts[n] != match_piece_counts[n]))
-        return 0;
-    }
-  }
-
-  return 1;
-}
-
-void print_piece_counts(int *piece_counts)
-{
-  int n;
-  int square;
-
-  putchar(0x0a);
-
-  for (n = 0; n < NUM_PIECE_TYPES_0 * 2; n++) {
-    if (!n)
-      square = 1;
-    else if (n == NUM_PIECE_TYPES_0)
-      square = -1;
-
-    if (n < (NUM_PIECE_TYPES_0 * 2) - 1) {
-      printf("%c %d ",format_square(square),piece_counts[n]);
-
-      if (square > 0)
-        square++;
-      else
-        square--;
-    }
-    else
-      printf("%c %d\n",format_square(square),piece_counts[n]);
-  }
 }
