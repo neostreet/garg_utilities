@@ -6,7 +6,10 @@
 #include "garg.glb"
 #include "garg.mac"
 
+extern char piece_ids[]; /* "RNBQKG" */
+
 static char buf[20];
+char fmt_str[] = "%s\n";
 
 char decode_piece(int piece,int bShowBlack)
 {
