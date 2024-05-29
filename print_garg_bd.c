@@ -7,7 +7,7 @@
 #include "garg.fun"
 #include "garg.mac"
 
-static char usage[] = "usage: print_garg_bd (-debug) (-all_moves) filename\n";
+static char usage[] = "usage: print_garg_bd (-debug) (-all_moves) (-crop) filename\n";
 
 int bHaveGame;
 int afl_dbg;
@@ -19,22 +19,26 @@ int main(int argc,char **argv)
   int curr_arg;
   bool bDebug;
   bool bAllMoves;
+  bool bCrop;
   int retval;
   bool bPrintedBoard;
 
-  if ((argc < 2) || (argc > 4)) {
+  if ((argc < 2) || (argc > 5)) {
     printf(usage);
     return 1;
   }
 
   bDebug = false;
   bAllMoves = false;
+  bCrop = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-debug"))
       bDebug = true;
     else if (!strcmp(argv[curr_arg],"-all_moves"))
       bAllMoves = true;
+    else if (!strcmp(argv[curr_arg],"-crop"))
+      bCrop = true;
     else
       break;
   }
@@ -60,7 +64,12 @@ int main(int argc,char **argv)
     printf("curr_move = %d\n",curr_game.curr_move);
 
     putchar(0x0a);
-    print_bd(&curr_game);
+
+    if (!bCrop)
+      print_bd(&curr_game);
+    else
+      print_bd_cropped(&curr_game);
+
     print_special_moves(&curr_game);
   }
   else {
@@ -78,7 +87,12 @@ int main(int argc,char **argv)
       printf("curr_move = %d\n",curr_game.curr_move);
 
       putchar(0x0a);
-      print_bd(&curr_game);
+
+      if (!bCrop)
+        print_bd(&curr_game);
+      else
+        print_bd_cropped(&curr_game);
+
       print_special_moves(&curr_game);
       bPrintedBoard = true;
     }
