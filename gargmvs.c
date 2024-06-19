@@ -113,8 +113,6 @@ int do_pawn_move(struct game *gamept)
   return retval; // success
 }
 
-char piece_ids[] = "RNBQKG";
-
 int (*piece_functions[])(struct game *) = {
   rook_move2,
   knight_move2,
