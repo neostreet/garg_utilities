@@ -56,6 +56,11 @@ int main(int argc,char **argv)
   putchar(0x0a);
   print_bd(&curr_game);
   putchar(0x0a);
+  printf("White:\n");
+  print_piece_info2(curr_game.white_pieces);
+  printf("Black:\n");
+  print_piece_info2(curr_game.black_pieces);
+  putchar(0x0a);
 
   legal_moves_count =  0;
 
