@@ -82,15 +82,15 @@ int main(int argc,char **argv)
         dbg = 1;
 
       if (player_is_in_check(bBlack,curr_game.board)) {
-        if (!bVerbose)
+        if (!bVerbose) {
           printf("%s\n",filename);
+          break;
+        }
         else {
           printf("%s: on move %d, %s didn't respond to a check made on the previous move\n",
             filename,curr_game.curr_move,(bBlack ? "Black" : "White"));
           print_bd0(curr_game.board,curr_game.orientation);
         }
-
-        break;
       }
     }
 
