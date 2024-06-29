@@ -14,7 +14,7 @@ int bHaveGame;
 int afl_dbg;
 
 static char usage[] =
-"usage: validate_garg_checks (-verbose) filename\n";
+"usage: validate_garg_checks (-verbose) (-terse) filename\n";
 
 char couldnt_get_status[] = "couldn't get status of %s\n";
 char couldnt_open[] = "couldn't open %s\n";
@@ -24,6 +24,7 @@ int main(int argc,char **argv)
   int n;
   int curr_arg;
   bool bVerbose;
+  bool bTerse;
   int retval;
   FILE *fptr;
   int filename_len;
@@ -31,16 +32,19 @@ int main(int argc,char **argv)
   bool bBlack;
   bool bPrintedFilename;
 
-  if ((argc < 2) || (argc > 3)) {
+  if ((argc < 2) || (argc > 4)) {
     printf(usage);
     return 1;
   }
 
   bVerbose = false;
+  bTerse = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-verbose"))
       bVerbose = true;
+    else if (!strcmp(argv[curr_arg],"-terse"))
+      bTerse = true;
     else
       break;
   }
@@ -50,9 +54,14 @@ int main(int argc,char **argv)
     return 2;
   }
 
+  if (bVerbose && bTerse) {
+    printf("can't specify both -verbose and -terse\n");
+    return 3;
+  }
+
   if ((fptr = fopen(argv[argc-1],"r")) == NULL) {
     printf(couldnt_open,argv[argc-1]);
-    return 3;
+    return 4;
   }
 
   for ( ; ; ) {
@@ -84,6 +93,10 @@ int main(int argc,char **argv)
         if (!player_is_in_check(!bBlack,curr_game.board)) {
           if (!bPrintedFilename) {
             printf("%s\n",filename);
+
+            if (bTerse)
+              break;
+
             bPrintedFilename = true;
           }
 
@@ -95,6 +108,10 @@ int main(int argc,char **argv)
         if (player_is_in_check(!bBlack,curr_game.board)) {
           if (!bPrintedFilename) {
             printf("%s\n",filename);
+
+            if (bTerse)
+              break;
+
             bPrintedFilename = true;
           }
 
