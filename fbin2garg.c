@@ -17,11 +17,6 @@ static char usage[] =
 
 static struct game curr_game;
 
-#define CHESSIST_NUM_FILES 8
-
-#define CHESSIST_RANK_OF(pos) ((pos) / CHESSIST_NUM_FILES)
-#define CHESSIST_FILE_OF(pos) ((pos) % CHESSIST_NUM_FILES)
-
 char couldnt_get_status[] = "couldn't get status of %s\n";
 char couldnt_open[] = "couldn't open %s\n";
 
@@ -82,19 +77,6 @@ int main(int argc,char **argv)
       printf("curr_move = %d\n",curr_game.curr_move);
 
       continue;
-    }
-
-    for (n = 0; n < curr_game.num_moves; n++) {
-      chessist_file_from = CHESSIST_FILE_OF(curr_game.moves[n].from);
-      chessist_rank_from = CHESSIST_RANK_OF(curr_game.moves[n].from);
-      chessist_file_to = CHESSIST_FILE_OF(curr_game.moves[n].to);
-      chessist_rank_to = CHESSIST_RANK_OF(curr_game.moves[n].to);
-
-      garg_from = POS_OF(chessist_rank_from,chessist_file_from + 1);
-      garg_to = POS_OF(chessist_rank_to,chessist_file_to + 1);
-
-      curr_game.moves[n].from = garg_from;
-      curr_game.moves[n].to = garg_to;
     }
 
     retval = write_binary_game(garg_filename,&curr_game);
