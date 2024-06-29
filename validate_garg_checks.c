@@ -10,11 +10,11 @@
 #define MAX_FILENAME_LEN 256
 static char filename[MAX_FILENAME_LEN];
 
-int bHaveGame;
-int afl_dbg;
-
 static char usage[] =
 "usage: validate_garg_checks (-verbose) (-terse) filename\n";
+
+int bHaveGame;
+int afl_dbg;
 
 char couldnt_get_status[] = "couldn't get status of %s\n";
 char couldnt_open[] = "couldn't open %s\n";
@@ -59,8 +59,8 @@ int main(int argc,char **argv)
     return 3;
   }
 
-  if ((fptr = fopen(argv[argc-1],"r")) == NULL) {
-    printf(couldnt_open,argv[argc-1]);
+  if ((fptr = fopen(argv[curr_arg],"r")) == NULL) {
+    printf(couldnt_open,argv[curr_arg]);
     return 4;
   }
 
