@@ -55,13 +55,8 @@ int main(int argc,char **argv)
       continue;
     }
 
-    legal_moves_count = 0;
-    get_legal_moves(&curr_game,&legal_moves[0],&legal_moves_count);
-
-    if (!legal_moves_count) {
-      if (!(curr_game.moves[curr_game.num_moves-1].special_move_info & SPECIAL_MOVE_MATE))
-        printf("%s\n",filename);
-    }
+    if (curr_game.moves[curr_game.num_moves-1].special_move_info & SPECIAL_MOVE_STALEMATE)
+      printf("%s\n",filename);
   }
 
   return 0;
