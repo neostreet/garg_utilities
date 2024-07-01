@@ -11,7 +11,7 @@
 static char filename[MAX_FILENAME_LEN];
 
 static char usage[] =
-"usage: fix_broken_garg_games (-verbose) filename\n";
+"usage: fix_broken_garg_games (-verbose) (-terse) filename\n";
 
 int bHaveGame;
 int afl_dbg;
@@ -24,6 +24,7 @@ int main(int argc,char **argv)
   int n;
   int curr_arg;
   bool bVerbose;
+  bool bTerse;
   int retval;
   FILE *fptr;
   int filename_len;
@@ -31,16 +32,19 @@ int main(int argc,char **argv)
   bool bBlack;
   int dbg;
 
-  if ((argc < 2) || (argc > 3)) {
+  if ((argc < 2) || (argc > 4)) {
     printf(usage);
     return 1;
   }
 
   bVerbose = false;
+  bTerse = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-verbose"))
       bVerbose = true;
+    else if (!strcmp(argv[curr_arg],"-terse"))
+      bTerse = true;
     else
       break;
   }
@@ -50,9 +54,14 @@ int main(int argc,char **argv)
     return 2;
   }
 
+  if (bVerbose && bTerse) {
+    printf("can't specify both -verbose and -terse\n");
+    return 3;
+  }
+
   if ((fptr = fopen(argv[curr_arg],"r")) == NULL) {
     printf(couldnt_open,argv[curr_arg]);
-    return 3;
+    return 4;
   }
 
   for ( ; ; ) {
@@ -87,7 +96,11 @@ int main(int argc,char **argv)
           print_bd0(curr_game.board,curr_game.orientation);
 
         // truncate the game at the point where it went south
-        printf("fixing %s\n",filename);
+        if (!bTerse)
+          printf("fixing %s\n",filename);
+        else
+          printf("%s\n",filename);
+
         curr_game.moves[curr_game.curr_move - 1].special_move_info |= SPECIAL_MOVE_CHECK;
         curr_game.num_moves = curr_game.curr_move;
 
