@@ -29,6 +29,9 @@ int main(int argc,char **argv)
   int filename_len;
   struct game curr_game;
   int new_orientation;
+  int mating_square;
+  int mating_piece;
+  char algebraic[3];
 
   if ((argc < 2) || (argc > 3)) {
     printf(usage);
@@ -54,6 +57,8 @@ int main(int argc,char **argv)
     return 3;
   }
 
+  algebraic[2] = 0;
+
   for ( ; ; ) {
     GetLine(fptr,filename,&filename_len,MAX_FILENAME_LEN);
 
@@ -72,8 +77,11 @@ int main(int argc,char **argv)
     }
 
     if (curr_game.moves[curr_game.num_moves-1].special_move_info & SPECIAL_MOVE_MATE) {
-      printf("%c %s\n",
-        format_square(get_piece1(curr_game.board,curr_game.moves[curr_game.num_moves-1].to)),filename);
+      mating_square = curr_game.moves[curr_game.num_moves-1].to;
+      algebraic[0] = 'a' + FILE_OF(mating_square);
+      algebraic[1] = '1' + RANK_OF(mating_square);
+      mating_piece = format_square(get_piece1(curr_game.board,mating_square));
+      printf("%s %c %s\n",algebraic,mating_piece,filename);
     }
   }
 
