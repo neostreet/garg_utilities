@@ -14,7 +14,7 @@ static char filename[MAX_FILENAME_LEN];
 int mate_counts[NUM_PIECE_TYPES_0];
 
 static char usage[] =
-"usage: count_mate_pieces (-verbose) (-sort) filename\n";
+"usage: count_garg_mate_pieces (-verbose) (-sort) filename\n";
 
 char couldnt_get_status[] = "couldn't get status of %s\n";
 char couldnt_open[] = "couldn't open %s\n";
