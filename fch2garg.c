@@ -16,7 +16,7 @@ static char line[MAX_LINE_LEN];
 #include "garg.mac"
 
 static char usage[] =
-"usage: fch2garg (-debug) filename\n";
+"usage: fch2garg (-debug) (-ignore_read_errors) filename\n";
 
 static struct game curr_game;
 
@@ -36,21 +36,25 @@ int main(int argc,char **argv)
 {
   int curr_arg;
   bool bDebug;
+  bool bIgnoreReadErrors;
   FILE *fptr0;
   int file_len;
   int ch_filename_len;
   int retval;
 
-  if ((argc < 2) || (argc > 3)) {
+  if ((argc < 2) || (argc > 4)) {
     printf(usage);
     return 1;
   }
 
   bDebug = false;
+  bIgnoreReadErrors = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-debug"))
       bDebug = true;
+    else if (!strcmp(argv[curr_arg],"-ignore_read_errors"))
+      bIgnoreReadErrors = true;
     else
       break;
   }
@@ -84,10 +88,12 @@ int main(int argc,char **argv)
 
     retval = read_game(filename,&curr_game,err_msg);
 
-    if (retval) {
-      printf("read_game of %s failed: %d\n",filename,retval);
-      printf("curr_move = %d\n",curr_game.curr_move);
-      continue;
+    if (!bIgnoreReadErrors) {
+      if (retval) {
+        printf("read_game of %s failed: %d\n",filename,retval);
+        printf("curr_move = %d\n",curr_game.curr_move);
+        continue;
+      }
     }
 
     retval = write_binary_game(garg_filename,&curr_game);
