@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define MAX_FILENAME_LEN 1024
@@ -41,6 +42,7 @@ int main(int argc,char **argv)
   int file_len;
   int ch_filename_len;
   int retval;
+  char *cpt;
 
   if ((argc < 2) || (argc > 4)) {
     printf(usage);
@@ -67,6 +69,17 @@ int main(int argc,char **argv)
   if ((fptr0 = fopen(argv[curr_arg],"r")) == NULL) {
     printf(couldnt_open,argv[curr_arg]);
     return 3;
+  }
+
+  cpt = getenv("DEBUG_FCH2GARG");
+
+  if (cpt != NULL) {
+    debug_level = atoi(cpt);
+    debug_fptr = fopen("fch2garg.dbg","w");
+  }
+  else {
+    debug_level = 0;
+    debug_fptr = NULL;
   }
 
   for ( ; ; ) {
