@@ -11,7 +11,7 @@
 static char filename[MAX_FILENAME_LEN];
 
 static char usage[] =
-"usage: fresult_changed (-debug) (-terse) filename\n";
+"usage: fresult_changed (-debug) (-terse) (-verbose) filename\n";
 
 char couldnt_get_status[] = "couldn't get status of %s\n";
 char couldnt_open[] = "couldn't open %s\n";
@@ -25,6 +25,7 @@ int main(int argc,char **argv)
   int curr_arg;
   bool bDebug;
   bool bTerse;
+  bool bVerbose;
   int retval;
   FILE *fptr;
   int filename_len;
@@ -32,19 +33,22 @@ int main(int argc,char **argv)
   int original_result;
   int garg_result;
 
-  if ((argc < 2) || (argc > 4)) {
+  if ((argc < 2) || (argc > 5)) {
     printf(usage);
     return 1;
   }
 
   bDebug = false;
   bTerse = false;
+  bVerbose = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-debug"))
       bDebug = true;
     else if (!strcmp(argv[curr_arg],"-terse"))
       bTerse = true;
+    else if (!strcmp(argv[curr_arg],"-verbose"))
+      bVerbose = true;
     else
       break;
   }
@@ -54,9 +58,14 @@ int main(int argc,char **argv)
     return 2;
   }
 
+  if (bTerse && bVerbose) {
+    printf("can't specify both -terse and -verbose\n");
+    return 3;
+  }
+
   if ((fptr = fopen(argv[curr_arg],"r")) == NULL) {
     printf(couldnt_open,argv[curr_arg]);
-    return 3;
+    return 4;
   }
 
   for ( ; ; ) {
@@ -85,20 +94,24 @@ int main(int argc,char **argv)
         garg_result = BLACK_WIN;
 
       if (original_result != garg_result) {
-        if (!bTerse)
+        if (bVerbose)
           printf("%s: %d changed to %d\n",filename,original_result,garg_result);
-        else
+        else if (bTerse)
           printf("%d %d\n",original_result,garg_result);
+        else
+          printf("%s\n",filename);
       }
     }
     else if (curr_game.moves[curr_game.num_moves-1].special_move_info & SPECIAL_MOVE_STALEMATE) {
       garg_result = DRAW;
 
       if (original_result != garg_result) {
-        if (!bTerse)
+        if (bVerbose)
           printf("%s: %d changed to %d\n",filename,original_result,garg_result);
-        else
+        else if (bTerse)
           printf("%d %d\n",original_result,garg_result);
+        else
+          printf("%s\n",filename);
       }
     }
   }
