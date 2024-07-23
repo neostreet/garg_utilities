@@ -11,7 +11,7 @@
 static char filename[MAX_FILENAME_LEN];
 
 static char usage[] =
-"usage: fresult_changed (-debug) filename\n";
+"usage: fresult_changed (-debug) (-terse) filename\n";
 
 char couldnt_get_status[] = "couldn't get status of %s\n";
 char couldnt_open[] = "couldn't open %s\n";
@@ -24,6 +24,7 @@ int main(int argc,char **argv)
   int n;
   int curr_arg;
   bool bDebug;
+  bool bTerse;
   int retval;
   FILE *fptr;
   int filename_len;
@@ -31,16 +32,19 @@ int main(int argc,char **argv)
   int original_result;
   int garg_result;
 
-  if ((argc < 2) || (argc > 3)) {
+  if ((argc < 2) || (argc > 4)) {
     printf(usage);
     return 1;
   }
 
   bDebug = false;
+  bTerse = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-debug"))
       bDebug = true;
+    else if (!strcmp(argv[curr_arg],"-terse"))
+      bTerse = true;
     else
       break;
   }
@@ -80,14 +84,22 @@ int main(int argc,char **argv)
       else
         garg_result = BLACK_WIN;
 
-      if (original_result != garg_result)
-        printf("%s: %d changed to %d\n",filename,original_result,garg_result);
+      if (original_result != garg_result) {
+        if (!bTerse)
+          printf("%s: %d changed to %d\n",filename,original_result,garg_result);
+        else
+          printf("%d %d\n",original_result,garg_result);
+      }
     }
     else if (curr_game.moves[curr_game.num_moves-1].special_move_info & SPECIAL_MOVE_STALEMATE) {
       garg_result = DRAW;
 
-      if (original_result != garg_result)
-        printf("%s: %d changed to %d\n",filename,original_result,garg_result);
+      if (original_result != garg_result) {
+        if (!bTerse)
+          printf("%s: %d changed to %d\n",filename,original_result,garg_result);
+        else
+          printf("%d %d\n",original_result,garg_result);
+      }
     }
   }
 
