@@ -12,7 +12,7 @@ static char filename[MAX_FILENAME_LEN];
 
 static char usage[] =
 "usage: find_garg_missed_mates (-terse) (-all) (in_a_loss) (-mine) (-opponent)\n"
-"  (-count) filename\n";
+"  (-count) (-both_players) filename\n";
 
 int bHaveGame;
 int afl_dbg;
@@ -32,6 +32,7 @@ int main(int argc,char **argv)
   bool bMine;
   bool bOpponent;
   bool bCount;
+  bool bBothPlayers;
   bool bLoss;
   int retval;
   FILE *fptr;
@@ -42,8 +43,10 @@ int main(int argc,char **argv)
   int work_legal_moves_count;
   int dbg;
   int count;
+  int white_count;
+  int black_count;
 
-  if ((argc < 2) || (argc > 8)) {
+  if ((argc < 2) || (argc > 9)) {
     printf(usage);
     return 1;
   }
@@ -54,6 +57,7 @@ int main(int argc,char **argv)
   bMine = false;
   bOpponent = false;
   bCount = false;
+  bBothPlayers = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-terse"))
@@ -68,6 +72,8 @@ int main(int argc,char **argv)
       bOpponent = true;
     else if (!strcmp(argv[curr_arg],"-count"))
       bCount = true;
+    else if (!strcmp(argv[curr_arg],"-both_players"))
+      bBothPlayers = true;
     else
       break;
   }
@@ -82,9 +88,14 @@ int main(int argc,char **argv)
     return 3;
   }
 
+  if (bCount && bBothPlayers) {
+    printf("can't specify both -count and -both_players\n");
+    return 4;
+  }
+
   if ((fptr = fopen(argv[curr_arg],"r")) == NULL) {
     printf(couldnt_open,argv[curr_arg]);
-    return 4;
+    return 5;
   }
 
   for ( ; ; ) {
@@ -108,6 +119,10 @@ int main(int argc,char **argv)
 
     if (bCount)
       count = 0;
+    else if (bBothPlayers) {
+      white_count = 0;
+      black_count = 0;
+    }
 
     for (curr_game.curr_move = 0;
          curr_game.curr_move < curr_game.num_moves;
@@ -169,6 +184,12 @@ int main(int argc,char **argv)
                 if (bCount) {
                   count++;
                 }
+                else if (bBothPlayers) {
+                  if (!(curr_game.curr_move % 2))
+                    white_count++;
+                  else
+                    black_count++;
+                }
                 else {
                   if (bTerse) {
                     printf("%s\n",filename);
@@ -200,6 +221,12 @@ int main(int argc,char **argv)
                   if (bCount) {
                     count++;
                   }
+                  else if (bBothPlayers) {
+                    if (!(curr_game.curr_move % 2))
+                      white_count++;
+                    else
+                      black_count++;
+                  }
                   else {
                     if (bTerse) {
                       printf("%s\n",filename);
@@ -221,12 +248,20 @@ int main(int argc,char **argv)
         }
       }
 
-      if (!bAll && !bCount && (n < legal_moves_count))
+      if (!bAll && !bCount && !bBothPlayers && (n < legal_moves_count))
         break;
     }
 
-    if (bCount && count)
-      printf("%d missed mates found in %s\n",count,filename);
+    if (bCount) {
+      if (count) {
+        printf("%d missed mates found in %s\n",count,filename);
+      }
+    }
+    else if (bBothPlayers) {
+      if ((white_count >= 1) && (black_count >= 1)) {
+        printf("%s\n",filename);
+      }
+    }
   }
 
   fclose(fptr);
