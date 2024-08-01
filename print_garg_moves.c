@@ -7,7 +7,7 @@
 #include "garg.fun"
 #include "garg.mac"
 
-static char usage[] = "usage: print_garg_moves (-debug) filename\n";
+static char usage[] = "usage: print_garg_moves (-debug) (-hex) filename\n";
 
 int bHaveGame;
 int afl_dbg;
@@ -18,19 +18,23 @@ int main(int argc,char **argv)
 {
   int curr_arg;
   bool bDebug;
+  bool bHex;
   int initial_move;
   int retval;
 
-  if ((argc < 2) || (argc > 3)) {
+  if ((argc < 2) || (argc > 4)) {
     printf(usage);
     return 1;
   }
 
   bDebug = false;
+  bHex = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-debug"))
       bDebug = true;
+    else if (!strcmp(argv[curr_arg],"-hex"))
+      bHex = true;
     else
       break;
   }
@@ -49,7 +53,7 @@ int main(int argc,char **argv)
     return 3;
   }
 
-  print_moves(&curr_game);
+  print_moves(&curr_game,bHex);
 
   return 0;
 }
