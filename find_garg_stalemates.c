@@ -26,7 +26,6 @@ int main(int argc,char **argv)
   FILE *fptr;
   int filename_len;
   struct game curr_game;
-  unsigned char board[CHARS_IN_BOARD];
 
   if (argc != 2) {
     printf(usage);
