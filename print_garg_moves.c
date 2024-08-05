@@ -53,7 +53,7 @@ int main(int argc,char **argv)
     return 3;
   }
 
-  print_moves(&curr_game,bHex);
+  print_moves(curr_game.moves,curr_game.num_moves,bHex);
 
   return 0;
 }
