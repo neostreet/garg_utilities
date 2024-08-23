@@ -53,6 +53,11 @@ int main(int argc,char **argv)
     return 3;
   }
 
+  printf("%s, num_moves = %d\n",argv[curr_arg],curr_game.num_moves);
+  putchar(0x0a);
+  print_bd(&curr_game);
+  putchar(0x0a);
+
   print_moves(curr_game.moves,curr_game.num_moves,bHex);
 
   return 0;
