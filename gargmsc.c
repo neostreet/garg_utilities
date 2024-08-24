@@ -1,428 +1,68 @@
 #include <stdio.h>
+#include <string.h>
+
 #include "garg.h"
+#define MAKE_GLOBALS_HERE
 #include "garg.glb"
 #include "garg.fun"
 #include "garg.mac"
-#include "bitfuns.h"
 
-int format_square(int square)
+static char usage[] = "usage: print_garg_moves (-debug) (-hex) (-move_numbers) filename\n";
+
+int bHaveGame;
+int afl_dbg;
+
+static struct game curr_game;
+
+int main(int argc,char **argv)
 {
-  bool bBlack;
-  int return_char;
+  int curr_arg;
+  bool bDebug;
+  bool bHex;
+  bool bMoveNumbers;
+  int initial_move;
+  int retval;
 
-  if (!square)
-    return (int)'.';
-
-  if (square < 0) {
-    bBlack = true;
-    square *= -1;
-  }
-  else
-    bBlack = false;
-
-  if (square == 1)
-    return_char = 'P';
-  else
-    return_char = piece_ids[square - 2];
-
-  if (!bBlack)
-    return_char += ('a' - 'A');
-
-  return return_char;
-}
-
-void print_bd0(unsigned char *board,int orientation)
-{
-  int m;
-  int n;
-  int square;
-
-  for (m = 0; m < NUM_RANKS; m++) {
-    for (n = 0; n < NUM_FILES; n++) {
-      if (!orientation)
-        square = get_piece2(board,(NUM_RANKS - 1) - m,n);
-      else
-        square = get_piece2(board,m,(NUM_FILES - 1) - n);
-
-      printf("%c",format_square(square));
-
-      if (n < (NUM_FILES - 1))
-        putchar(' ');
-    }
-
-    putchar(0x0a);
-  }
-}
-
-void print_bd(struct game *gamept)
-{
-  int m;
-  int n;
-  int square;
-
-  for (m = 0; m < NUM_RANKS; m++) {
-    for (n = 0; n < NUM_FILES; n++) {
-      if (!gamept->orientation)
-        square = get_piece2(gamept->board,(NUM_RANKS - 1) - m,n);
-      else
-        square = get_piece2(gamept->board,m,(NUM_FILES - 1) - n);
-
-      printf("%c",format_square(square));
-
-      if (n < (NUM_FILES - 1))
-        putchar(' ');
-    }
-
-    putchar(0x0a);
-  }
-}
-
-void print_bd_cropped(struct game *gamept)
-{
-  int m;
-  int n;
-  int square;
-
-  for (m = 0; m < NUM_RANKS; m++) {
-    for (n = 1; n < NUM_FILES - 1; n++) {
-      if (!gamept->orientation)
-        square = get_piece2(gamept->board,(NUM_RANKS - 1) - m,n);
-      else
-        square = get_piece2(gamept->board,m,(NUM_FILES - 1) - n);
-
-      printf("%c",format_square(square));
-
-      if (n < (NUM_FILES - 2))
-        putchar(' ');
-    }
-
-    putchar(0x0a);
-  }
-}
-
-void fprint_game(struct game *gamept,char *filename)
-{
-  FILE *fptr;
-  char buf[20];
-
-  if ((fptr = fopen(filename,"w")) == NULL)
-    return;
-
-  fprintf(fptr,fmt_str,gamept->title);
-
-  set_initial_board(gamept);
-
-  for (gamept->curr_move = 0;
-       gamept->curr_move <= gamept->num_moves;
-       gamept->curr_move++) {
-
-    sprintf_move(gamept,buf,20,true);
-    fprintf(fptr,fmt_str,buf);
-
-    update_board(gamept,NULL,NULL,false);
+  if ((argc < 2) || (argc > 5)) {
+    printf(usage);
+    return 1;
   }
 
-  fclose(fptr);
-}
+  bDebug = false;
+  bHex = false;
+  bMoveNumbers = false;
 
-void fprint_game2(struct game *gamept,FILE *fptr)
-{
-  char buf[20];
-
-  fprintf(fptr,fmt_str,gamept->title);
-
-  set_initial_board(gamept);
-
-  for (gamept->curr_move = 0;
-       gamept->curr_move <= gamept->num_moves;
-       gamept->curr_move++) {
-
-    sprintf_move(gamept,buf,20,true);
-    fprintf(fptr,fmt_str,buf);
-
-    update_board(gamept,NULL,NULL,false);
-  }
-}
-
-void fprint_bd(struct game *gamept,char *filename)
-{
-  int m;
-  int n;
-  FILE *fptr;
-  int square;
-
-  if ((fptr = fopen(filename,"w")) == NULL)
-    return;
-
-  for (m = 0; m < NUM_RANKS; m++) {
-    for (n = 0; n < NUM_FILES; n++) {
-      square = get_piece2(gamept->board,(NUM_RANKS - 1) - m,n);
-      fprintf(fptr,"%c ",format_square(square));
-    }
-
-    fputc(0x0a,fptr);
+  for (curr_arg = 1; curr_arg < argc; curr_arg++) {
+    if (!strcmp(argv[curr_arg],"-debug"))
+      bDebug = true;
+    else if (!strcmp(argv[curr_arg],"-hex"))
+      bHex = true;
+    else if (!strcmp(argv[curr_arg],"-move_numbers"))
+      bMoveNumbers = true;
+    else
+      break;
   }
 
-  fclose(fptr);
-}
-
-void fprint_bd2(unsigned char *board,FILE *fptr)
-{
-  int m;
-  int n;
-  int square;
-
-  for (m = 0; m < NUM_RANKS; m++) {
-    for (n = 0; n < NUM_FILES; n++) {
-      square = get_piece2(board,(NUM_RANKS - 1) - m,n);
-      fprintf(fptr,"%c ",format_square(square));
-    }
-
-    fputc(0x0a,fptr);
-  }
-}
-
-void fprint_bd3(unsigned char *board,int orientation,FILE *fptr)
-{
-  int m;
-  int n;
-  int square;
-
-  for (m = 0; m < 8; m++) {
-    for (n = 0; n < 8; n++) {
-      if (!orientation)
-        square = get_piece2(board,7 - m,n);
-      else
-        square = get_piece2(board,m,7 - n);
-
-      fprintf(fptr,"%c",format_square(square));
-
-      if (n < 7)
-        fputc(' ',fptr);
-    }
-
-    fputc(0x0a,fptr);
-  }
-}
-
-void print_moves(struct move *moves,int num_moves,bool bHex,bool bMoveNumbers)
-{
-  int m;
-  int n;
-  int and_val;
-  int hit;
-  int dbg_move;
-  int dbg;
-
-  dbg_move = -1;
-
-  for (n = 0; n < num_moves; n++) {
-    if (n == dbg_move)
-      dbg = 1;
-
-    if (bHex) {
-      if (bMoveNumbers) {
-        printf("%3d from: %c%c to: %c%c %04x\n",
-          n,
-          'a' + FILE_OF(moves[n].from),'1' + RANK_OF(moves[n].from),
-          'a' + FILE_OF(moves[n].to),'1' + RANK_OF(moves[n].to),
-          moves[n].special_move_info);
-      }
-      else {
-        printf("from: %c%c to: %c%c %04x\n",
-          'a' + FILE_OF(moves[n].from),'1' + RANK_OF(moves[n].from),
-          'a' + FILE_OF(moves[n].to),'1' + RANK_OF(moves[n].to),
-          moves[n].special_move_info);
-       }
-    }
-    else {
-      if (bMoveNumbers) {
-        printf("%3d from: %c%c to: %c%c",
-          n,
-          'a' + FILE_OF(moves[n].from),'1' + RANK_OF(moves[n].from),
-          'a' + FILE_OF(moves[n].to),'1' + RANK_OF(moves[n].to));
-      }
-      else {
-        printf("from: %c%c to: %c%c",
-          'a' + FILE_OF(moves[n].from),'1' + RANK_OF(moves[n].from),
-          'a' + FILE_OF(moves[n].to),'1' + RANK_OF(moves[n].to));
-      }
-
-      and_val = 0x1;
-      hit = 0;
-
-      for (m = 0; m < num_special_moves; m++) {
-        if (moves[n].special_move_info & and_val) {
-          hit = 1;
-          putchar(' ' );
-          printf("%s",special_moves[m]);
-        }
-
-        and_val <<= 1;
-      }
-
-      if (!hit)
-        printf(" SPECIAL_MOVE_NONE");
-
-      putchar(0x0a);
-    }
+  if (argc - curr_arg != 1) {
+    printf(usage);
+    return 2;
   }
 
-  dbg = 1; // see if you get here
-}
+  retval = read_binary_game(argv[curr_arg],&curr_game);
 
-void fprint_moves(struct move *moves,int num_moves,char *filename)
-{
-  int m;
-  int n;
-  int and_val;
-  int hit;
-  FILE *fptr;
+  if (retval) {
+    printf("read_binary_game of %s failed: %d\n",argv[curr_arg],retval);
+    printf("curr_move = %d\n",curr_game.curr_move);
 
-  if ((fptr = fopen(filename,"w")) == NULL)
-    return;
-
-  for (n = 0; n < num_moves; n++) {
-    fprintf(fptr,"%3d from: %c%c to: %c%c",
-      n,
-      'a' + FILE_OF(moves[n].from),'1' + RANK_OF(moves[n].from),
-      'a' + FILE_OF(moves[n].to),'1' + RANK_OF(moves[n].to));
-
-    and_val = 0x1;
-    hit = 0;
-
-    for (m = 0; m < num_special_moves; m++) {
-      if (moves[n].special_move_info & and_val) {
-        hit = 1;
-        fputc(' ',fptr);
-        fprintf(fptr,"%s",special_moves[m]);
-      }
-
-      and_val <<= 1;
-    }
-
-    if (!hit)
-      fprintf(fptr," SPECIAL_MOVE_NONE");
-
-    fputc(0x0a,fptr);
+    return 3;
   }
 
-  fclose(fptr);
-}
+  printf("%s, num_moves = %d\n",argv[curr_arg],curr_game.num_moves);
+  putchar(0x0a);
+  print_bd(&curr_game);
+  putchar(0x0a);
 
-void fprint_moves2(struct move *moves,int num_moves,FILE *fptr)
-{
-  int n;
+  print_moves(curr_game.moves,curr_game.num_moves,bHex,bMoveNumbers);
 
-  fprintf(fptr,"fprint_moves2:\n");
-
-  for (n = 0; n < num_moves; n++) {
-    fprintf(fptr,"%d %d %x\n",
-      moves[n].from,
-      moves[n].to,
-      moves[n].special_move_info);
-  }
-}
-
-void print_special_moves(struct game *gamept)
-{
-  int n;
-  int and_val;
-  int hit;
-
-  and_val = 0x1;
-  hit = 0;
-
-  for (n = 0; n < num_special_moves; n++) {
-    if (gamept->moves[gamept->curr_move].special_move_info & and_val) {
-      if (hit)
-        putchar(' ' );
-
-      printf("%s",special_moves[n]);
-
-      hit++;
-    }
-
-    and_val <<= 1;
-  }
-
-  if (hit)
-    putchar(0x0a);
-  else
-    printf("SPECIAL_MOVE_NONE\n");
-}
-
-void position_game(struct game *gamept,int move)
-{
-  set_initial_board(gamept);
-
-  for (gamept->curr_move = 0; gamept->curr_move < move; gamept->curr_move++) {
-    update_board(gamept,NULL,NULL,false);
-    update_piece_info(gamept);
-  }
-}
-
-int get_piece1(unsigned char *board,int board_offset)
-{
-  unsigned int bit_offset;
-  unsigned short piece;
-  int piece_int;
-
-  bit_offset = board_offset * BITS_PER_BOARD_SQUARE;
-
-  piece = get_bits(BITS_PER_BOARD_SQUARE,board,bit_offset);
-  piece_int = piece;
-
-  if (piece & 0x8)
-    piece_int |= 0xfffffff0;
-
-  return piece_int;
-}
-
-int get_piece2(unsigned char *board,int rank,int file)
-{
-  int board_offset;
-
-  board_offset = rank * NUM_FILES + file;
-  return get_piece1(board,board_offset);
-}
-
-static int set_piece_calls;
-static int dbg_set_piece_call;
-static int dbg_board_offset;
-static int dbg_piece;
-
-void set_piece1(unsigned char *board,int board_offset,int piece)
-{
-  unsigned int bit_offset;
-  int dbg;
-
-  set_piece_calls++;
-
-  if (dbg_set_piece_call == set_piece_calls)
-    dbg = 0;
-
-  if (debug_level == 2) {
-    if (debug_fptr != NULL)
-      fprintf(debug_fptr,"set_piece: board_offset = %d, piece %d\n",board_offset,piece);
-  }
-
-  bit_offset = board_offset * BITS_PER_BOARD_SQUARE;
-  set_bits(BITS_PER_BOARD_SQUARE,board,bit_offset,piece);
-}
-
-void set_piece2(unsigned char *board,int rank,int file,int piece)
-{
-  int board_offset;
-
-  board_offset = rank * NUM_FILES + file;
-  set_piece1(board,board_offset,piece);
-}
-
-void copy_board(unsigned char *from_board,unsigned char *to_board)
-{
-  int n;
-
-  for (n = 0; n < CHARS_IN_BOARD; n++)
-    to_board[n] = from_board[n];
+  return 0;
 }
