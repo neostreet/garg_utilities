@@ -78,8 +78,6 @@ int main(int argc,char **argv)
       bCount = true;
     else if (!strcmp(argv[curr_arg],"-both_players"))
       bBothPlayers = true;
-    else if (!strcmp(argv[curr_arg],"-count"))
-      bCount = true;
     else if (!strcmp(argv[curr_arg],"-white"))
       bWhite = true;
     else if (!strcmp(argv[curr_arg],"-black"))
