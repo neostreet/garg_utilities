@@ -12,7 +12,7 @@ static char filename[MAX_FILENAME_LEN];
 
 static char usage[] =
 "usage: find_garg_missed_mates (-terse) (-all) (in_a_loss) (-mine) (-opponent)\n"
-"  (-count) (-both_players) (-white) (-black) filename\n";
+"  (-count) (-both_players) (-white) (-black) (-truncate) filename\n";
 
 int bHaveGame;
 int afl_dbg;
@@ -35,6 +35,7 @@ int main(int argc,char **argv)
   bool bBothPlayers;
   bool bWhite;
   bool bBlack;
+  bool bTruncate;
   bool bLoss;
   int retval;
   FILE *fptr;
@@ -48,7 +49,7 @@ int main(int argc,char **argv)
   int white_count;
   int black_count;
 
-  if ((argc < 2) || (argc > 11)) {
+  if ((argc < 2) || (argc > 12)) {
     printf(usage);
     return 1;
   }
@@ -62,6 +63,7 @@ int main(int argc,char **argv)
   bBothPlayers = false;
   bWhite = false;
   bBlack = false;
+  bTruncate = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-terse"))
@@ -82,6 +84,8 @@ int main(int argc,char **argv)
       bWhite = true;
     else if (!strcmp(argv[curr_arg],"-black"))
       bBlack = true;
+    else if (!strcmp(argv[curr_arg],"-truncate"))
+      bTruncate = true;
     else
       break;
   }
@@ -210,6 +214,14 @@ int main(int argc,char **argv)
                   else {
                     if (bTerse) {
                       printf("%s\n",filename);
+
+                      if (bTruncate) {
+                        curr_game.num_moves = curr_game.curr_move;
+                        retval = write_binary_game(filename,&curr_game);
+
+                        if (retval)
+                          printf("write_binary_game of %s failed: %d\n",filename,retval);
+                      }
                     }
                     else {
                       printf("%s: a mate was missed on move %d, from = %c%c, to = %c%c:\n",
