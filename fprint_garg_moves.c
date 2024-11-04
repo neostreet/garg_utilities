@@ -12,7 +12,7 @@ static char filename[MAX_FILENAME_LEN];
 static char moves_filename[MAX_FILENAME_LEN];
 
 static char usage[] =
-"usage: fprint_moves (-debug) filename\n";
+"usage: fprint_garg_moves (-debug) filename\n";
 
 char couldnt_get_status[] = "couldn't get status of %s\n";
 char couldnt_open[] = "couldn't open %s\n";
