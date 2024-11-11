@@ -9,6 +9,7 @@
 
 #define MAX_FILENAME_LEN 256
 static char filename[MAX_FILENAME_LEN];
+static char trunc_filename[MAX_FILENAME_LEN];
 
 static char usage[] =
 "usage: find_garg_missed_mates (-terse) (-all) (in_a_loss) (-mine) (-opponent)\n"
@@ -21,6 +22,12 @@ char couldnt_get_status[] = "couldn't get status of %s\n";
 char couldnt_open[] = "couldn't open %s\n";
 
 static struct move work_legal_moves[MAX_LEGAL_MOVES];
+
+static int build_trunc_filename(
+  char *garg_filename,
+  int garg_filename_len,
+  char *trunc_filename,
+  int max_filename_len);
 
 int main(int argc,char **argv)
 {
@@ -40,6 +47,7 @@ int main(int argc,char **argv)
   int retval;
   FILE *fptr;
   int filename_len;
+  int garg_filename_len;
   struct game curr_game;
   bool bBlacksMove;
   struct game work_game;
@@ -217,10 +225,20 @@ int main(int argc,char **argv)
 
                       if (bTruncate) {
                         curr_game.num_moves = curr_game.curr_move;
-                        retval = write_binary_game(filename,&curr_game);
 
-                        if (retval)
-                          printf("write_binary_game of %s failed: %d\n",filename,retval);
+                        garg_filename_len = strlen(filename);
+
+                        retval = build_trunc_filename(filename,garg_filename_len,trunc_filename,MAX_FILENAME_LEN);
+
+                        if (retval) {
+                          printf("build_trunc_filename failed on %s: %d\n",filename,retval);
+                        }
+                        else {
+                          retval = write_binary_game(trunc_filename,&curr_game);
+
+                          if (retval)
+                            printf("write_binary_game of %s failed: %d\n",trunc_filename,retval);
+                        }
                       }
                     }
                     else {
@@ -295,6 +313,31 @@ int main(int argc,char **argv)
   }
 
   fclose(fptr);
+
+  return 0;
+}
+
+static int build_trunc_filename(
+  char *garg_filename,
+  int garg_filename_len,
+  char *trunc_filename,
+  int max_filename_len)
+{
+  int n;
+
+  for (n = 0; n < garg_filename_len; n++) {
+    if (garg_filename[n] == '.')
+      break;
+  }
+
+  if (n == garg_filename_len)
+    return 1;
+
+  if (n + 6 > max_filename_len - 1)
+    return 2;
+
+  strncpy(trunc_filename,garg_filename,n);
+  strcpy(&trunc_filename[n],".trunc");
 
   return 0;
 }
