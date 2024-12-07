@@ -402,4 +402,3 @@ int calc_square(char *algebraic_notation)
 
   return rank * NUM_FILES + file;
 }
-sd
