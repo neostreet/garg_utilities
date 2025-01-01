@@ -129,11 +129,11 @@ static int build_trunc_filename(
   if (n == garg_filename_len)
     return 1;
 
-  if (n + 6 > max_filename_len - 1)
+  if (n + 7 > max_filename_len - 1)
     return 2;
 
   strncpy(trunc_filename,garg_filename,n);
-  strcpy(&trunc_filename[n],".trunc");
+  strcpy(&trunc_filename[n],".trunc2");
 
   return 0;
 }
