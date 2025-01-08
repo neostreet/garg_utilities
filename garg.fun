@@ -14,6 +14,7 @@ void update_move_number(struct game *gamept);
 void copy_game(struct game *gamept_to,struct game *gamept_from);
 void GetLine(FILE *fptr,char *line,int *line_len,int maxllen);
 int populate_board_from_board_file(unsigned char *board,char *filename,int orientation);
+int populate_board_from_bin_board_file(unsigned char *board,char *filename);
 int write_board_to_binfile(unsigned char *board,char *filename);
 void calculate_seirawan_counts(struct game *gamept);
 
