@@ -13,7 +13,7 @@ static char trunc_filename[MAX_FILENAME_LEN];
 
 static char usage[] =
 "usage: find_garg_missed_mates (-terse) (-all) (in_a_loss) (-mine) (-opponent)\n"
-"  (-count) (-both_players) (-white) (-black) (-truncate) filename\n";
+"  (-count) (-both_players) (-white) (-black) (-truncate) (-binary_format) (-ignore_read_errors) filename\n";
 
 int bHaveGame;
 int afl_dbg;
@@ -43,6 +43,8 @@ int main(int argc,char **argv)
   bool bWhite;
   bool bBlack;
   bool bTruncate;
+  bool bBinaryFormat;
+  bool bIgnoreReadErrors;
   bool bLoss;
   int retval;
   FILE *fptr;
@@ -57,7 +59,7 @@ int main(int argc,char **argv)
   int white_count;
   int black_count;
 
-  if ((argc < 2) || (argc > 12)) {
+  if ((argc < 2) || (argc > 14)) {
     printf(usage);
     return 1;
   }
@@ -72,6 +74,8 @@ int main(int argc,char **argv)
   bWhite = false;
   bBlack = false;
   bTruncate = false;
+  bBinaryFormat = false;
+  bIgnoreReadErrors = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-terse"))
@@ -94,6 +98,10 @@ int main(int argc,char **argv)
       bBlack = true;
     else if (!strcmp(argv[curr_arg],"-truncate"))
       bTruncate = true;
+    else if (!strcmp(argv[curr_arg],"-binary_format"))
+      bBinaryFormat = true;
+    else if (!strcmp(argv[curr_arg],"-ignore_read_errors"))
+      bIgnoreReadErrors = true;
     else
       break;
   }
@@ -131,13 +139,29 @@ int main(int argc,char **argv)
 
     bzero(&curr_game,sizeof (struct game));
 
-    retval = read_binary_game(filename,&curr_game);
+    if (!bBinaryFormat) {
+      retval = read_game(filename,&curr_game,err_msg);
 
-    if (retval) {
-      printf("read_binary_game of %s failed: %d\n",filename,retval);
-      printf("curr_move = %d\n",curr_game.curr_move);
+      if (retval) {
+        if (!bIgnoreReadErrors) {
+          printf("read_game of %s failed: %d\n",filename,retval);
+          printf("curr_move = %d\n",curr_game.curr_move);
 
-      continue;
+          continue;
+        }
+        else
+          printf("ignoring read error of %s at move %d\n",filename,curr_game.curr_move);
+      }
+    }
+    else {
+      retval = read_binary_game(filename,&curr_game);
+
+      if (retval) {
+        printf("read_binary_game of %s failed: %d\n",filename,retval);
+        printf("curr_move = %d\n",curr_game.curr_move);
+
+        continue;
+      }
     }
 
     set_initial_board(&curr_game);
