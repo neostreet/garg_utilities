@@ -101,12 +101,14 @@ int main(int argc,char **argv)
 
     retval = read_game(filename,&curr_game,err_msg);
 
-    if (!bIgnoreReadErrors) {
-      if (retval) {
+    if (retval) {
+      if (!bIgnoreReadErrors) {
         printf("read_game of %s failed: %d\n",filename,retval);
         printf("curr_move = %d\n",curr_game.curr_move);
         continue;
       }
+      else
+        printf("ignoring read error of %s at move %d\n",filename,curr_game.curr_move);
     }
 
     retval = write_binary_game(garg_filename,&curr_game);
