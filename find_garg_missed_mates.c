@@ -258,6 +258,8 @@ int main(int argc,char **argv)
                           printf("build_trunc_filename failed on %s: %d\n",filename,retval);
                         }
                         else {
+                          curr_game.orientation = curr_game.num_moves % 2;
+
                           retval = write_binary_game(trunc_filename,&curr_game);
 
                           if (retval)
