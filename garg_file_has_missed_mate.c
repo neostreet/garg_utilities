@@ -8,7 +8,7 @@
 #include "garg.mac"
 
 static char usage[] =
-"usage: garg_flie_has_missed_mate (-binary_format) filename (filename ...)\n";
+"usage: garg_file_has_missed_mate (-binary_format) filename (filename ...)\n";
 
 int bHaveGame;
 int afl_dbg;
