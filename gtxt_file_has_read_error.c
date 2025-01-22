@@ -13,8 +13,6 @@ static char usage[] =
 int bHaveGame;
 int afl_dbg;
 
-static struct move work_legal_moves[MAX_LEGAL_MOVES];
-
 int main(int argc,char **argv)
 {
   int n;
