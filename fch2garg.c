@@ -17,7 +17,7 @@ static char line[MAX_LINE_LEN];
 #include "garg.mac"
 
 static char usage[] =
-"usage: fch2garg (-debug) (-ignore_read_errors) filename\n";
+"usage: fch2garg (-debug) (-ignore_read_errors) (-extext) filename\n";
 
 static struct game curr_game;
 
@@ -28,7 +28,8 @@ static int build_garg_filename(
   char *ch_filename,
   int ch_filename_len,
   char *garg_filename,
-  int max_filename_len);
+  int max_filename_len,
+  char *ext);
 
 int bHaveGame;
 int afl_dbg;
@@ -38,25 +39,29 @@ int main(int argc,char **argv)
   int curr_arg;
   bool bDebug;
   bool bIgnoreReadErrors;
+  char *ext;
   FILE *fptr0;
   int file_len;
   int ch_filename_len;
   int retval;
   char *cpt;
 
-  if ((argc < 2) || (argc > 4)) {
+  if ((argc < 2) || (argc > 5)) {
     printf(usage);
     return 1;
   }
 
   bDebug = false;
   bIgnoreReadErrors = false;
+  ext = NULL;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-debug"))
       bDebug = true;
     else if (!strcmp(argv[curr_arg],"-ignore_read_errors"))
       bIgnoreReadErrors = true;
+    else if (!strncmp(argv[curr_arg],"-ext",4))
+      ext = &argv[curr_arg][4];
     else
       break;
   }
@@ -90,7 +95,7 @@ int main(int argc,char **argv)
 
     ch_filename_len = strlen(filename);
 
-    retval = build_garg_filename(filename,ch_filename_len,garg_filename,MAX_FILENAME_LEN);
+    retval = build_garg_filename(filename,ch_filename_len,garg_filename,MAX_FILENAME_LEN,ext);
 
     if (retval) {
       printf("build_garg_filename failed on %s: %d\n",filename,retval);
@@ -125,7 +130,8 @@ static int build_garg_filename(
   char *ch_filename,
   int ch_filename_len,
   char *garg_filename,
-  int max_filename_len)
+  int max_filename_len,
+  char *ext)
 {
   int n;
 
@@ -137,11 +143,23 @@ static int build_garg_filename(
   if (n == ch_filename_len)
     return 1;
 
-  if (n + 5 > max_filename_len - 1)
-    return 2;
+  if (!ext) {
+    if (n + 5 > max_filename_len - 1)
+      return 2;
+  }
+  else {
+    if (n + 1 + strlen(ext) > max_filename_len - 1)
+      return 3;
+  }
 
   strncpy(garg_filename,ch_filename,n);
-  strcpy(&garg_filename[n],".garg");
+
+  if (!ext)
+    strcpy(&garg_filename[n],".garg");
+  else {
+    garg_filename[n] = '.';
+    strcpy(&garg_filename[n+1],ext);
+  }
 
   return 0;
 }
