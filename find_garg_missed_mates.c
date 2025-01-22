@@ -13,7 +13,7 @@ static char trunc_filename[MAX_FILENAME_LEN];
 
 static char usage[] =
 "usage: find_garg_missed_mates (-terse) (-all) (in_a_loss) (-mine) (-opponent)\n"
-"  (-count) (-both_players) (-white) (-black) (-truncate) (-binary_format) (-ignore_read_errors) filename\n";
+"  (-count) (-both_players) (-white) (-black) (-truncate) (-binary_format) (-ignore_read_errors) (-extext) filename\n";
 
 int bHaveGame;
 int afl_dbg;
@@ -27,7 +27,8 @@ static int build_trunc_filename(
   char *garg_filename,
   int garg_filename_len,
   char *trunc_filename,
-  int max_filename_len);
+  int max_filename_len,
+  char *ext);
 
 int main(int argc,char **argv)
 {
@@ -45,6 +46,7 @@ int main(int argc,char **argv)
   bool bTruncate;
   bool bBinaryFormat;
   bool bIgnoreReadErrors;
+  char *ext;
   bool bLoss;
   int retval;
   FILE *fptr;
@@ -59,7 +61,7 @@ int main(int argc,char **argv)
   int white_count;
   int black_count;
 
-  if ((argc < 2) || (argc > 14)) {
+  if ((argc < 2) || (argc > 15)) {
     printf(usage);
     return 1;
   }
@@ -76,6 +78,7 @@ int main(int argc,char **argv)
   bTruncate = false;
   bBinaryFormat = false;
   bIgnoreReadErrors = false;
+  ext = NULL;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-terse"))
@@ -102,6 +105,8 @@ int main(int argc,char **argv)
       bBinaryFormat = true;
     else if (!strcmp(argv[curr_arg],"-ignore_read_errors"))
       bIgnoreReadErrors = true;
+    else if (!strncmp(argv[curr_arg],"-ext",4))
+      ext = &argv[curr_arg][4];
     else
       break;
   }
@@ -252,7 +257,7 @@ int main(int argc,char **argv)
 
                         garg_filename_len = strlen(filename);
 
-                        retval = build_trunc_filename(filename,garg_filename_len,trunc_filename,MAX_FILENAME_LEN);
+                        retval = build_trunc_filename(filename,garg_filename_len,trunc_filename,MAX_FILENAME_LEN,ext);
 
                         if (retval) {
                           printf("build_trunc_filename failed on %s: %d\n",filename,retval);
@@ -347,7 +352,8 @@ static int build_trunc_filename(
   char *garg_filename,
   int garg_filename_len,
   char *trunc_filename,
-  int max_filename_len)
+  int max_filename_len,
+  char *ext)
 {
   int n;
 
@@ -359,11 +365,23 @@ static int build_trunc_filename(
   if (n == garg_filename_len)
     return 1;
 
-  if (n + 6 > max_filename_len - 1)
-    return 2;
+  if (!ext) {
+    if (n + 6 > max_filename_len - 1)
+      return 2;
+  }
+  else {
+    if (n + 1 + strlen(ext) > max_filename_len - 1)
+      return 3;
+  }
 
   strncpy(trunc_filename,garg_filename,n);
-  strcpy(&trunc_filename[n],".trunc");
+
+  if (!ext)
+    strcpy(&trunc_filename[n],".trunc");
+  else {
+    trunc_filename[n] = '.';
+    strcpy(&trunc_filename[n+1],ext);
+  }
 
   return 0;
 }
