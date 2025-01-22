@@ -103,8 +103,7 @@ int main(int argc,char **argv)
 
     if (retval) {
       if (!bIgnoreReadErrors) {
-        printf("read_game of %s failed: %d\n",filename,retval);
-        printf("curr_move = %d\n",curr_game.curr_move);
+        printf("read_game of %s failed: %d, curr_move = %d\n",filename,retval,curr_game.curr_move);
         continue;
       }
       else
