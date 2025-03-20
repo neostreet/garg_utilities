@@ -11,7 +11,7 @@
 static char filename[MAX_FILENAME_LEN];
 
 static char usage[] =
-"usage: find_mates_lite (-debug) (-no_preceding_mate_in_one) filename\n";
+"usage: find_garg_mates_lite (-debug) (-no_preceding_mate_in_one) (-with_preceding_check) filename\n";
 
 char couldnt_get_status[] = "couldn't get status of %s\n";
 char couldnt_open[] = "couldn't open %s\n";
@@ -25,24 +25,28 @@ int main(int argc,char **argv)
   int curr_arg;
   bool bDebug;
   bool bNoPrecedingMateInOne;
+  bool bWithPrecedingCheck;
   int retval;
   FILE *fptr;
   int filename_len;
   struct game curr_game;
 
-  if ((argc < 2) || (argc > 4)) {
+  if ((argc < 2) || (argc > 5)) {
     printf(usage);
     return 1;
   }
 
   bDebug = false;
   bNoPrecedingMateInOne = false;
+  bWithPrecedingCheck = false;
 
   for (curr_arg = 1; curr_arg < argc; curr_arg++) {
     if (!strcmp(argv[curr_arg],"-debug"))
       bDebug = true;
     else if (!strcmp(argv[curr_arg],"-no_preceding_mate_in_one"))
       bNoPrecedingMateInOne = true;
+    else if (!strcmp(argv[curr_arg],"-with_preceding_check"))
+      bWithPrecedingCheck = true;
     else
       break;
   }
@@ -75,12 +79,21 @@ int main(int argc,char **argv)
     }
 
     if (curr_game.moves[curr_game.num_moves-1].special_move_info & SPECIAL_MOVE_MATE) {
-      if (!bNoPrecedingMateInOne) {
+      if (bWithPrecedingCheck) {
+        if (curr_game.num_moves >= 3) {
+          if (curr_game.moves[curr_game.num_moves-3].special_move_info & SPECIAL_MOVE_CHECK) {
+            printf("%s\n",filename);
+          }
+        }
+      }
+      else if (!bNoPrecedingMateInOne) {
         printf("%s\n",filename);
       }
       else {
-        if (!(curr_game.moves[curr_game.num_moves-2].special_move_info & SPECIAL_MOVE_MATE_IN_ONE)) {
-          printf("%s\n",filename);
+        if (curr_game.num_moves >= 2) {
+          if (!(curr_game.moves[curr_game.num_moves-2].special_move_info & SPECIAL_MOVE_MATE_IN_ONE)) {
+            printf("%s\n",filename);
+          }
         }
       }
     }
