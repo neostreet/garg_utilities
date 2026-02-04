@@ -129,13 +129,7 @@ int read_game(char *filename,struct game *gamept,char *err_msg)
     if (end_of_file)
       break;
 
-    if (!strcmp(word,"1-0"))
-      break;
-
-    if (!strcmp(word,"1/2-1/2"))
-      break;
-
-    if (!strcmp(word,"0-1"))
+    if (!strcmp(word,"1-0") || !strcmp(word,"0-1") || !strcmp(word,"1/2-1/2"))
       break;
 
     word_no++;
